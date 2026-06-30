@@ -1,0 +1,73 @@
+version: '3.9'
+
+services:
+  # Backend API Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: healthcare-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=sqlite:///./healthcare.db
+      - SECRET_KEY=${SECRET_KEY:-super-secret-key-change-in-production}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - DEBUG=true
+      - CHROMA_PERSIST_DIRECTORY=/app/data/chroma
+      - UPLOAD_DIR=/app/uploads
+    volumes:
+      - backend-data:/app/data
+      - backend-uploads:/app/uploads
+      - backend-models:/app/models
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - healthcare-network
+
+  # Frontend Service
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: healthcare-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    environment:
+      - VITE_API_URL=http://backend:8000/api/v1
+    restart: unless-stopped
+    networks:
+      - healthcare-network
+
+  # Redis Cache (optional - for session management)
+  redis:
+    image: redis:7-alpine
+    container_name: healthcare-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - healthcare-network
+
+volumes:
+  backend-data:
+  backend-uploads:
+  backend-models:
+  redis-data:
+
+networks:
+  healthcare-network:
+    driver: bridge
