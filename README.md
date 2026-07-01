@@ -597,6 +597,6 @@ This is an **educational and research project**. It is NOT intended to replace p
 
 **Built with ❤️ for Healthcare AI Innovation**
 
-*Star ⭐ this repository if you find it helpful!*
 
+*Star ⭐ this repository if you find it helpful!*
 </div>
